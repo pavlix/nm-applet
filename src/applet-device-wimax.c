@@ -36,6 +36,7 @@
 #include "applet.h"
 #include "applet-device-wimax.h"
 #include "applet-dialogs.h"
+#include "mobile-helpers.h"
 #include "nma-marshal.h"
 #include "mb-menu-item.h"
 #include "nm-ui-utils.h"
@@ -116,6 +117,7 @@ wimax_menu_item_activate (GtkMenuItem *item, gpointer user_data)
 	                                  user_data);
 }
 
+#ifndef ENABLE_INDICATOR
 static guint32
 nsp_type_to_mb_state (NMWimaxNspNetworkType nsp_type)
 {
@@ -131,6 +133,7 @@ nsp_type_to_mb_state (NMWimaxNspNetworkType nsp_type)
 
 	return MB_STATE_UNKNOWN;
 }
+#endif
 
 static GtkWidget *
 new_nsp_menu_item (NMDeviceWimax *device,
@@ -141,9 +144,23 @@ new_nsp_menu_item (NMDeviceWimax *device,
 {
 	GtkWidget *item;
 	WimaxMenuItemInfo *info;
+#ifdef ENABLE_INDICATOR
+	char *text = NULL;
+	GtkWidget *signal_icon = NULL;
+#endif
 
 	g_return_val_if_fail (nsp != NULL, NULL);
 
+#ifdef ENABLE_INDICATOR
+	text = g_strdup (nm_wimax_nsp_get_name (nsp));
+	item = gtk_image_menu_item_new_with_label (text);
+	g_free (text);
+	text = g_strdup (mobile_helper_get_quality_icon_name (nm_wimax_nsp_get_signal_quality (nsp)));
+	signal_icon = gtk_image_new_from_icon_name (text, GTK_ICON_SIZE_LARGE_TOOLBAR);
+	g_free (text);
+	gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (item), signal_icon);
+	gtk_image_menu_item_set_always_show_image (GTK_IMAGE_MENU_ITEM (item), TRUE);
+#else
 	item = nm_mb_menu_item_new (nm_wimax_nsp_get_name (nsp),
 		                        nm_wimax_nsp_get_signal_quality (nsp),
 		                        NULL,
@@ -152,6 +169,7 @@ new_nsp_menu_item (NMDeviceWimax *device,
 		                        nsp_type_to_mb_state (nm_wimax_nsp_get_network_type (nsp)),
 		                        TRUE,
 		                        applet);
+#endif
 	gtk_widget_set_sensitive (GTK_WIDGET (item), TRUE);
 
 	info = g_slice_new0 (WimaxMenuItemInfo);
@@ -454,11 +472,15 @@ wimax_get_icon (NMDevice *device,
 		break;
 	case NM_DEVICE_STATE_ACTIVATED:
 		roaming = (nsp_type == NM_WIMAX_NSP_NETWORK_TYPE_ROAMING_PARTNER);
+#ifdef ENABLE_INDICATOR
+		*out_icon_name = mobile_helper_get_quality_icon_name (quality);
+#else
 		*out_pixbuf = mobile_helper_get_status_pixbuf (quality,
 		                                          TRUE,
 		                                          nsp_type_to_mb_state (nsp_type),
 		                                          MB_TECH_WIMAX,
 		                                          applet);
+#endif
 		*tip = g_strdup_printf (_("Mobile broadband connection '%s' active: (%d%%%s%s)"),
 		                        id, quality,
 		                        roaming ? ", " : "",

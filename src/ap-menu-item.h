@@ -46,7 +46,9 @@ struct _NMNetworkMenuItem
 	/*< private >*/
 	GtkWidget * ssid;
 	char      * ssid_string;
+#ifndef ENABLE_INDICATOR
 	GtkWidget * strength;
+#endif
 	guint32     int_strength;
 	GtkWidget * detail;
 	GtkWidget * hbox;

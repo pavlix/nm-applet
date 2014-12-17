@@ -56,14 +56,23 @@ enum {
 	MB_TECH_WIMAX,
 };
 
+#ifndef ENABLE_INDICATOR
 GdkPixbuf *mobile_helper_get_status_pixbuf (guint32 quality,
                                             gboolean quality_valid,
                                             guint32 state,
                                             guint32 access_tech,
                                             NMApplet *applet);
+#endif
 
 const char *mobile_helper_get_quality_icon_name (guint32 quality);
 const char *mobile_helper_get_tech_icon_name (guint32 tech);
+
+#ifdef ENABLE_INDICATOR
+char *mobile_helper_get_connection_label (const char *connection_name,
+                                          const char *provider,
+                                          guint32 technology,
+                                          guint32 state);
+#endif
 
 /********************************************************************/
 

@@ -49,9 +49,11 @@ nm_network_menu_item_init (NMNetworkMenuItem * item)
 	gtk_box_pack_start (GTK_BOX (item->hbox), item->ssid, TRUE, TRUE, 0);
 	gtk_box_pack_start (GTK_BOX (item->hbox), item->detail, FALSE, FALSE, 0);
 
+#ifndef ENABLE_INDICATOR
 	item->strength = gtk_image_new ();
 	gtk_box_pack_end (GTK_BOX (item->hbox), item->strength, FALSE, TRUE, 0);
 	gtk_widget_show (item->strength);
+#endif
 
 	gtk_widget_show (item->ssid);
 	gtk_widget_show (item->detail);
@@ -141,6 +143,7 @@ nm_network_menu_item_best_strength (NMNetworkMenuItem * item,
                                     guint8 strength,
                                     NMApplet *applet)
 {
+#ifndef ENABLE_INDICATOR
 	GdkPixbuf *icon = NULL, *pixbuf, *top;
 
 	g_return_if_fail (item != NULL);
@@ -151,9 +154,11 @@ nm_network_menu_item_best_strength (NMNetworkMenuItem * item,
 	/* Just do nothing if the new strength is less */
 	if (strength < item->int_strength)
 		return;
+#endif
 
 	item->int_strength = strength;
 
+#ifndef ENABLE_INDICATOR
 	if (strength > 80)
 		icon = nma_icon_check_and_load ("nm-signal-100", applet);
 	else if (strength > 55)
@@ -187,6 +192,7 @@ nm_network_menu_item_best_strength (NMNetworkMenuItem * item,
 
 	gtk_image_set_from_pixbuf (GTK_IMAGE (item->strength), pixbuf);
 	g_object_unref (pixbuf);
+#endif
 }
 
 const char *

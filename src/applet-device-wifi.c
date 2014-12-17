@@ -306,6 +306,87 @@ is_blacklisted_ssid (const GByteArray *ssid)
 	return is_ssid_in_list (ssid, blacklisted_ssids);
 }
 
+#ifdef ENABLE_INDICATOR
+static gchar *
+get_best_icon_name_for_ap (NMAccessPoint *ap, gboolean need_sec, gboolean encrypted)
+{
+	GString *icon_name = NULL;
+	gchar *tmp = NULL;
+	guint32 strength;
+
+	g_return_val_if_fail (NM_IS_ACCESS_POINT (ap), NULL);
+
+	strength = nm_access_point_get_strength (ap);
+	strength = CLAMP (strength, 0, 100);
+
+	icon_name = g_string_new ("");
+	if (strength > 80)
+                icon_name = g_string_assign (icon_name, "nm-signal-100");
+        else if (strength > 55)
+                icon_name = g_string_assign (icon_name, "nm-signal-75");
+        else if (strength > 30)
+                icon_name = g_string_assign (icon_name, "nm-signal-50");
+        else if (strength > 5)
+                icon_name = g_string_assign (icon_name, "nm-signal-25");
+        else
+                icon_name = g_string_assign (icon_name, "nm-signal-00");
+
+        if (nm_access_point_get_mode (ap) == NM_802_11_MODE_ADHOC) {
+                icon_name = g_string_assign (icon_name, "nm-adhoc");
+		goto out;
+	}
+
+	if (need_sec && encrypted)
+		icon_name = g_string_append (icon_name, "-secure");
+
+out:
+	tmp = icon_name->str;
+	g_string_free (icon_name, FALSE);
+
+	return tmp;
+}
+
+static void
+set_menu_item_accessible_desc (NMAccessPoint *ap,
+			       GtkMenuItem *item,
+			       gboolean is_encrypted)
+{
+	guint32 strength;
+	gchar *ssid = NULL;
+	GString *icon_desc = NULL;
+
+	g_return_if_fail (NM_IS_ACCESS_POINT (ap));
+
+	strength = nm_access_point_get_strength (ap);
+	strength = CLAMP (strength, 0, 100);
+
+	ssid = g_strdup (gtk_menu_item_get_label (item));
+
+	if (ssid == NULL)
+		return;
+
+	icon_desc = g_string_new ("");
+	g_string_append_printf (icon_desc, "%s: ", ssid);
+
+	if (nm_access_point_get_mode (ap) == NM_802_11_MODE_ADHOC) {
+		icon_desc = g_string_append (icon_desc, _("ad-hoc"));
+		goto out;
+	}
+
+	g_string_append_printf (icon_desc, "%d%%", strength);
+
+	if (is_encrypted) {
+		icon_desc = g_string_append (icon_desc, ", ");
+		icon_desc = g_string_append (icon_desc, _("secure."));
+	}
+
+out:
+	atk_object_set_name (gtk_widget_get_accessible (GTK_WIDGET (item)), icon_desc->str);
+	g_free (ssid);
+	g_string_free (icon_desc, TRUE);
+}
+#endif
+
 static void
 clamp_ap_to_bssid (NMAccessPoint *ap, NMSettingWireless *s_wifi)
 {
@@ -535,6 +616,10 @@ create_new_ap_item (NMDeviceWifi *device,
 	WifiMenuItemInfo *info;
 	GSList *iter;
 	NMNetworkMenuItem *item = NULL;
+#ifdef ENABLE_INDICATOR
+	char *best_icon_name;
+	GtkWidget *icon_image;
+#endif
 	GSList *dev_connections = NULL;
 	GSList *ap_connections = NULL;
 	const GByteArray *ssid;
@@ -552,8 +637,18 @@ create_new_ap_item (NMDeviceWifi *device,
 	nm_network_menu_item_set_ssid (item, (GByteArray *) ssid);
 
 	dev_caps = nm_device_wifi_get_capabilities (device);
+#ifdef ENABLE_INDICATOR
+	best_icon_name = get_best_icon_name_for_ap (ap, TRUE, item->is_encrypted);
+	icon_image = gtk_image_new_from_icon_name (best_icon_name, GTK_ICON_SIZE_LARGE_TOOLBAR);
+	g_free (best_icon_name);
+
+	gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (item), icon_image);
+	gtk_image_menu_item_set_always_show_image (GTK_IMAGE_MENU_ITEM (item), TRUE);
+	set_menu_item_accessible_desc (ap, GTK_MENU_ITEM (item), item->is_encrypted);
+#else
 	gtk_image_menu_item_set_always_show_image (GTK_IMAGE_MENU_ITEM (item), TRUE);
 	nm_network_menu_item_set_detail (item, ap, nma_icon_check_and_load ("nm-adhoc", applet), dev_caps);
+#endif
 	nm_network_menu_item_best_strength (item, nm_access_point_get_strength (ap), applet);
 	nm_network_menu_item_add_dupe (item, ap);
 

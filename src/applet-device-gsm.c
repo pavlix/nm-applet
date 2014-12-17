@@ -44,6 +44,7 @@
 #include "applet.h"
 #include "applet-device-gsm.h"
 #include "utils.h"
+#include "mobile-helpers.h"
 #include "applet-dialogs.h"
 #include "mb-menu-item.h"
 #include "nma-marshal.h"
@@ -293,6 +294,9 @@ gsm_add_menu_item (NMDevice *device,
 	char *text;
 	GtkWidget *item;
 	GSList *iter;
+#ifdef ENABLE_INDICATOR
+	GtkWidget *signal_icon;
+#endif
 
 	info = g_object_get_data (G_OBJECT (device), "devinfo");
 
@@ -318,6 +322,19 @@ gsm_add_menu_item (NMDevice *device,
 		s_con = nm_connection_get_setting_connection (active);
 		g_assert (s_con);
 
+#ifdef ENABLE_INDICATOR
+		text = mobile_helper_get_connection_label (nm_setting_connection_get_id (s_con),
+		                                           info->op_name,
+		                                           gsm_act_to_mb_act (info),
+		                                           gsm_state_to_mb_state (info));
+		item = gtk_image_menu_item_new_with_label (text);
+		g_free (text);
+		text = g_strdup (mobile_helper_get_quality_icon_name (info->quality_valid ?  info->quality : 0));
+		signal_icon = gtk_image_new_from_icon_name (text, GTK_ICON_SIZE_LARGE_TOOLBAR);
+		g_free (text);
+		gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (item), signal_icon);
+		gtk_image_menu_item_set_always_show_image (GTK_IMAGE_MENU_ITEM (item), TRUE);
+#else
 		item = nm_mb_menu_item_new (nm_setting_connection_get_id (s_con),
 		                            info->quality_valid ? info->quality : 0,
 		                            info->op_name,
@@ -326,6 +343,7 @@ gsm_add_menu_item (NMDevice *device,
 		                            gsm_state_to_mb_state (info),
 		                            info->modem_enabled,
 		                            applet);
+#endif
 		gtk_widget_set_sensitive (GTK_WIDGET (item), TRUE);
 		add_connection_item (device, active, item, menu, applet);
 	}
@@ -339,6 +357,20 @@ gsm_add_menu_item (NMDevice *device,
 		}
 	} else {
 		/* Otherwise show idle registration state or disabled */
+#ifdef ENABLE_INDICATOR
+		text = mobile_helper_get_connection_label (NULL,
+		                                           info->op_name,
+		                                           gsm_act_to_mb_act (info),
+		                                           gsm_state_to_mb_state (info));
+		item = gtk_image_menu_item_new_with_label (text);
+		g_free (text);
+		text = g_strdup (mobile_helper_get_quality_icon_name (info->quality_valid ? info->quality : 0));
+		signal_icon = gtk_image_new_from_icon_name (text, GTK_ICON_SIZE_LARGE_TOOLBAR);
+		g_free (text);
+		gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (item), signal_icon);
+		gtk_image_menu_item_set_always_show_image (GTK_IMAGE_MENU_ITEM (item), TRUE);
+		gtk_widget_set_sensitive (item, FALSE);
+#else
 		item = nm_mb_menu_item_new (NULL,
 		                            info->quality_valid ? info->quality : 0,
 		                            info->op_name,
@@ -347,6 +379,8 @@ gsm_add_menu_item (NMDevice *device,
 		                            gsm_state_to_mb_state (info),
 		                            info->modem_enabled,
 		                            applet);
+#endif
+
 		gtk_widget_set_sensitive (GTK_WIDGET (item), FALSE);
 		gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 	}

@@ -31,6 +31,7 @@
 #include "mobile-helpers.h"
 #include "applet-dialogs.h"
 
+#ifndef ENABLE_INDICATOR
 GdkPixbuf *
 mobile_helper_get_status_pixbuf (guint32 quality,
                                  gboolean quality_valid,
@@ -98,6 +99,7 @@ mobile_helper_get_status_pixbuf (guint32 quality,
 	/* 'pixbuf' will be freed by the caller */
 	return pixbuf;
 }
+#endif
 
 const char *
 mobile_helper_get_quality_icon_name (guint32 quality)
@@ -113,6 +115,118 @@ mobile_helper_get_quality_icon_name (guint32 quality)
 	else 
 		return "nm-signal-00";
 }
+
+#ifdef ENABLE_INDICATOR
+static const char *
+get_tech_name (guint32 tech)
+{
+	switch (tech) {
+	case MB_TECH_1XRTT:
+		return _("CDMA");
+	case MB_TECH_EVDO:
+		return _("EVDO");
+	case MB_TECH_GSM:
+		return _("GSM");
+	case MB_TECH_GPRS:
+		return _("GPRS");
+	case MB_TECH_EDGE:
+		return _("EDGE");
+	case MB_TECH_UMTS:
+		return _("UMTS");
+	case MB_TECH_HSDPA:
+		return _("HSDPA");
+	case MB_TECH_HSUPA:
+		return _("HSUPA");
+	case MB_TECH_HSPA:
+		return _("HSPA");
+	case MB_TECH_HSPA_PLUS:
+		return _("HSPA+");
+	case MB_TECH_LTE:
+		return _("LTE");
+	default:
+		break;
+	}
+	return NULL;
+}
+
+char *
+mobile_helper_get_connection_label (const char *connection_name,
+                                    const char *provider,
+                                    guint32 technology,
+                                    guint32 state)
+{
+	const char *tech_name;
+	char *desc_string;
+
+	/* Construct the description string */
+	tech_name = get_tech_name (technology);
+	switch (state) {
+	default:
+	case MB_STATE_UNKNOWN:
+		desc_string = g_strdup (_("not enabled"));
+		break;
+	case MB_STATE_IDLE:
+		if (connection_name)
+			desc_string = g_strdup (connection_name);
+		else
+			desc_string = g_strdup (_("not registered"));
+		break;
+	case MB_STATE_HOME:
+		if (connection_name) {
+			if (provider && tech_name)
+				desc_string = g_strdup_printf ("%s (%s %s)", connection_name, provider, tech_name);
+			else if (provider || tech_name)
+				desc_string = g_strdup_printf ("%s (%s)", connection_name, provider ? provider : tech_name);
+			else
+				desc_string = g_strdup_printf ("%s", connection_name);
+		} else {
+			if (provider) {
+				if (tech_name)
+					desc_string = g_strdup_printf ("%s %s", provider, tech_name);
+				else
+					desc_string = g_strdup_printf ("%s", provider);
+			} else {
+				if (tech_name)
+					desc_string = g_strdup_printf (_("Home network (%s)"), tech_name);
+				else
+					desc_string = g_strdup_printf (_("Home network"));
+			}
+		}
+		break;
+	case MB_STATE_SEARCHING:
+		if (connection_name)
+			desc_string = g_strdup (connection_name);
+		else
+			desc_string = g_strdup (_("searching"));
+		break;
+	case MB_STATE_DENIED:
+		desc_string = g_strdup (_("registration denied"));
+		break;
+	case MB_STATE_ROAMING:
+		if (connection_name) {
+			if (tech_name)
+				desc_string = g_strdup_printf (_("%s (%s roaming)"), connection_name, tech_name);
+			else
+				desc_string = g_strdup_printf (_("%s (roaming)"), connection_name);
+		} else {
+			if (provider) {
+				if (tech_name)
+					desc_string = g_strdup_printf (_("%s (%s roaming)"), provider, tech_name);
+				else
+					desc_string = g_strdup_printf (_("%s (roaming)"), provider);
+			} else {
+				if (tech_name)
+					desc_string = g_strdup_printf (_("Roaming network (%s)"), tech_name);
+				else
+					desc_string = g_strdup_printf (_("Roaming network"));
+			}
+		}
+		break;
+	}
+
+	return desc_string;
+}
+#endif
 
 const char *
 mobile_helper_get_tech_icon_name (guint32 tech)
@@ -599,11 +713,16 @@ mobile_helper_get_icon (NMDevice *device,
 		*tip = g_strdup_printf (_("Requesting a network address for '%s'..."), id);
 		break;
 	case NM_DEVICE_STATE_ACTIVATED:
+#ifdef ENABLE_INDICATOR
+		*out_icon_name = mobile_helper_get_quality_icon_name (quality_valid ? quality : 0);
+#else
 		*out_pixbuf = mobile_helper_get_status_pixbuf (quality,
 		                                               quality_valid,
 		                                               mb_state,
 		                                               mb_tech,
 		                                               applet);
+#endif
+
 		if ((mb_state != MB_STATE_UNKNOWN) && quality_valid) {
 			gboolean roaming = (mb_state == MB_STATE_ROAMING);
 

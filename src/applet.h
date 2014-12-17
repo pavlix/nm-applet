@@ -36,6 +36,10 @@
 
 #include <libnotify/notify.h>
 
+#ifdef ENABLE_INDICATOR
+#include <libappindicator/app-indicator.h>
+#endif
+
 #include <nm-connection.h>
 #include <nm-client.h>
 #include <nm-access-point.h>
@@ -128,6 +132,10 @@ typedef struct
 #define NUM_CONNECTING_FRAMES 11
 #define NUM_VPN_CONNECTING_FRAMES 14
 
+#ifdef ENABLE_INDICATOR
+	AppIndicator *  app_indicator;
+	guint           update_menu_id;
+#else
 	GtkIconTheme *	icon_theme;
 	GHashTable *	icon_cache;
 	GdkPixbuf *		fallback_icon;
@@ -144,6 +152,7 @@ typedef struct
 
 	GtkWidget *		notifications_enabled_item;
 	guint			notifications_enabled_toggled_id;
+#endif
 
 	GtkWidget *		networking_enabled_item;
 	guint           networking_enabled_toggled_id;
@@ -298,8 +307,10 @@ GtkWidget * applet_new_menu_item_helper (NMConnection *connection,
                                          NMConnection *active,
                                          gboolean add_active);
 
+#ifndef ENABLE_INDICATOR
 GdkPixbuf * nma_icon_check_and_load (const char *name,
                                      NMApplet *applet);
+#endif
 
 gboolean applet_wifi_connect_to_hidden_network (NMApplet *applet);
 gboolean applet_wifi_connect_to_8021x_network (NMApplet *applet,

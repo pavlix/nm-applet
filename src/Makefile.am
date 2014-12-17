@@ -7,6 +7,7 @@ nm_applet_CPPFLAGS = \
 	$(NMA_CFLAGS) \
 	$(LIBSECRET_CFLAGS) \
 	$(NOTIFY_CFLAGS) \
+	$(APPINDICATOR_CFLAGS) \
 	-DNM_VERSION_MIN_REQUIRED=NM_VERSION_0_9_10 \
 	-DNM_VERSION_MAX_ALLOWED=NM_VERSION_0_9_10 \
 	-DICONDIR=\""$(datadir)/icons"\"						\
@@ -78,6 +79,7 @@ nm_applet_LDADD = \
 	$(NMA_LIBS) \
 	$(LIBSECRET_LIBS) \
 	$(NOTIFY_LIBS) \
+	$(APPINDICATOR_LIBS) \
 	${top_builddir}/src/marshallers/libmarshallers.la \
 	${top_builddir}/src/utils/libutils.la \
 	${top_builddir}/src/wireless-security/libwireless-security.la \

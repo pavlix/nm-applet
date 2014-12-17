@@ -16,6 +16,7 @@ libgconf_helpers_la_CPPFLAGS = \
 	-I$(top_srcdir)/src/utils \
 	$(GTK_CFLAGS) \
 	$(NMA_CFLAGS) \
+	$(APPINDICATOR_CFLAGS) \
 	$(MIGRATION_CFLAGS) \
 	$(DISABLE_DEPRECATED)
 
@@ -34,6 +35,7 @@ libgconf_helpers_test_la_CPPFLAGS = \
 	-I$(top_srcdir)/src/utils \
 	$(GTK_CFLAGS) \
 	$(NMA_CFLAGS) \
+	$(APPINDICATOR_CFLAGS) \
 	$(MIGRATION_CFLAGS) \
 	$(DISABLE_DEPRECATED)
 
