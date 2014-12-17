@@ -51,9 +51,9 @@ nm_network_menu_item_init (NMNetworkMenuItem * item)
 
 	item->strength = gtk_image_new ();
 	gtk_box_pack_end (GTK_BOX (item->hbox), item->strength, FALSE, TRUE, 0);
+	gtk_widget_show (item->strength);
 
 	gtk_widget_show (item->ssid);
-	gtk_widget_show (item->strength);
 	gtk_widget_show (item->detail);
 	gtk_widget_show (item->hbox);
 }

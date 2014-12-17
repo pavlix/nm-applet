@@ -596,6 +596,7 @@ reg_state_changed_cb (DBusGProxy *proxy,
 	update_registration_state (info, cdma1x_state, evdo_state);
 	info->skip_reg_poll = TRUE;
 	applet_schedule_update_icon (info->applet);
+	applet_schedule_update_menu (info->applet);
 }
 
 static void

@@ -1035,6 +1035,8 @@ reg_info_changed_cb (DBusGProxy *proxy,
 	                                                        op_name,
 	                                                        info->op_code);
 	info->skip_reg_poll = TRUE;
+
+	applet_schedule_update_menu (info->applet);
 }
 
 static void
