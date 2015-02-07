@@ -1869,10 +1869,6 @@ nma_menu_add_vpn_submenu (GtkWidget *menu, NMApplet *applet)
 		if (active) {
 #ifdef ENABLE_INDICATOR
 			gtk_check_menu_item_set_active (GTK_CHECK_MENU_ITEM(item), TRUE);
-#else
-			GtkWidget *image = gtk_image_new_from_stock (GTK_STOCK_CONNECT, GTK_ICON_SIZE_MENU);
-
-			gtk_image_menu_item_set_image (GTK_IMAGE_MENU_ITEM (item), image);
 #endif
 		}
 
